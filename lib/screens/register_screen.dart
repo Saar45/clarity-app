@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/brain_logo.dart';
+import '../services/user_service.dart';
 import 'home.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -33,17 +34,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _register() {
+  void _register() async {
     if (_formKey.currentState!.validate() && _acceptTerms) {
-      // For demo purposes, always register successfully
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => MyHomePage(
-            title: 'Mes Notes',
-            changeTheme: widget.changeTheme,
+      final name = _nameController.text.trim();
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+      
+      final success = await UserService.register(name, email, password);
+      
+      if (success) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => MyHomePage(
+              title: 'Mes Notes',
+              changeTheme: widget.changeTheme,
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Cet email est déjà utilisé.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } else if (!_acceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/brain_logo.dart';
+import '../services/user_service.dart';
 import 'home.dart';
 import 'register_screen.dart';
 
@@ -51,17 +52,33 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  void _login() {
+  void _login() async {
     if (_formKey.currentState!.validate()) {
-      // For demo purposes, always login successfully
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => MyHomePage(
-            title: 'Mes Notes',
-            changeTheme: widget.changeTheme,
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+      
+      // Check login with UserService
+      final success = await UserService.login(email, password);
+      
+      if (success) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => MyHomePage(
+              title: 'Mes Notes',
+              changeTheme: widget.changeTheme,
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        // Show error message for incorrect credentials
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Identifiants incorrects.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 

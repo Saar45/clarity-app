@@ -2,10 +2,20 @@ import 'package:flutter/material.dart';
 import 'screens/home.dart';
 import 'data/theme.dart';
 import 'services/shared_preferences_service.dart';
+import 'services/user_service.dart';
+import 'services/note_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/splash_screen.dart';
 
-void main() => runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize services
+  await UserService.initialize();
+  await NoteService.initialize();
+  
+  runApp(MyApp());
+}
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -30,7 +40,15 @@ class _MyAppState extends State<MyApp> {
       title: 'Clarity Point',
       theme: theme,
       home: SplashScreen(theme: theme, onComplete: () {
-        return LoginScreen(changeTheme: setTheme);
+        // Check if user is logged in
+        if (UserService.currentUser != null) {
+          return MyHomePage(
+            title: 'Mes Notes',
+            changeTheme: setTheme,
+          );
+        } else {
+          return LoginScreen(changeTheme: setTheme);
+        }
       }),
     );
   }

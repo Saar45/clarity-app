@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../models/note.dart';
 import '../services/note_service.dart';
 import '../utils/strings.dart';
+import '../services/user_service.dart';
 import 'note_editor.dart';
 
 class NoteDetailScreen extends StatefulWidget {
@@ -285,9 +286,16 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                       trailing: IconButton(
                         icon: Icon(Icons.remove_circle_outline, color: Colors.red),
                         onPressed: () {
+                          // Create a new list to avoid modifying the original directly
+                          List<String> updatedSharedWith = List.from(note.sharedWith);
+                          updatedSharedWith.removeAt(index);
+                          
                           setState(() {
-                            note.sharedWith.removeAt(index);
+                            note.sharedWith = updatedSharedWith;
                           });
+                          
+                          // Save the updated note
+                          NoteService.updateNote(note);
                           Navigator.pop(context);
                           _showShareDialog();
                         },
@@ -307,17 +315,40 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             child: Text(Strings.cancel),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (emailController.text.isNotEmpty) {
-                setState(() {
-                  note.shareWith(emailController.text);
-                });
-                // Save the updated note
-                NoteService.updateNote(note);
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('${Strings.noteSharedWith} ${emailController.text}')),
-                );
+                final email = emailController.text.trim();
+                
+                try {
+                  // Create a new modifiable list with the existing shared emails
+                  final updatedSharedWith = List<String>.from(note.sharedWith);
+                  
+                  // Add the new email if not already present
+                  if (!updatedSharedWith.contains(email)) {
+                    updatedSharedWith.add(email);
+                  }
+                  
+                  // Update the note's sharedWith list
+                  setState(() {
+                    note.sharedWith = updatedSharedWith;
+                  });
+                  
+                  // Save the updated note
+                  await NoteService.updateNote(note);
+                  
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${Strings.noteSharedWith} ${email}')),
+                  );
+                } catch (e) {
+                  print('Error while sharing note: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Erreur lors du partage de la note: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
             child: Text(Strings.share),

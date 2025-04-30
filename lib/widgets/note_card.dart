@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/note.dart';
 import '../data/theme.dart';
+import '../services/user_service.dart'; // Import UserService
 
 class NoteCard extends StatelessWidget {
   final Note note;
@@ -25,6 +26,26 @@ class NoteCard extends StatelessWidget {
       Colors.blue.withOpacity(0.8),
       Colors.amber.withOpacity(0.8),
     ];
+    
+    // Check if the note is owned by the current user
+    final currentUser = UserService.currentUser;
+    final isMyNote = currentUser != null && note.userId == currentUser.id;
+    
+    // Handle potential null values in userId
+    String ownerName = "quelqu'un";
+    try {
+      final ownerUser = UserService.getUserByEmail(note.userId);
+      if (ownerUser != null && ownerUser.name.isNotEmpty) {
+        ownerName = ownerUser.name;
+      } else {
+        ownerName = note.userId.split('@').first; // Use the first part of the email if available
+      }
+    } catch (e) {
+      print('Error getting owner name: $e');
+    }
+    
+    final sharedIcon = isMyNote ? Icons.share : Icons.people;
+    final sharedTooltip = isMyNote ? 'Partagé avec d\'autres' : 'Partagé avec vous';
     
     return Dismissible(
       key: Key(note.id),
@@ -109,10 +130,30 @@ class NoteCard extends StatelessWidget {
                           color: Colors.white.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Icon(
-                          Icons.share,
-                          color: Colors.white,
-                          size: 16,
+                        child: Tooltip(
+                          message: sharedTooltip,
+                          child: Icon(
+                            sharedIcon,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    if (!isMyNote)
+                      Container(
+                        padding: EdgeInsets.all(6),
+                        margin: EdgeInsets.only(left: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Tooltip(
+                          message: 'Créé par $ownerName',
+                          child: Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                         ),
                       ),
                   ],

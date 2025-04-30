@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/note.dart';
 import '../services/note_service.dart';
+import '../services/user_service.dart';
 import '../utils/strings.dart';
 import '../widgets/note_card.dart';
 import 'note_detail.dart';
@@ -79,6 +80,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
+    final currentUser = UserService.currentUser;
     
     return Scaffold(
       body: NestedScrollView(
@@ -187,7 +189,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        'Bonjour, Utilisateur',
+                                        'Bonjour, ${currentUser?.name ?? 'Utilisateur'}',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,

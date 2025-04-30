@@ -5,6 +5,7 @@ class Note {
   DateTime createdAt;
   DateTime updatedAt;
   List<String> sharedWith;
+  String userId;
 
   Note({
     required this.id,
@@ -12,29 +13,42 @@ class Note {
     required this.content,
     required this.createdAt,
     required this.updatedAt,
-    this.sharedWith = const [],
-  });
+    List<String>? sharedWith, // Make this optional
+    required this.userId,
+  }) : this.sharedWith = sharedWith ?? []; // Initialize as empty modifiable list if null
 
   // Factory constructor to create a new note
-  factory Note.create({required String title, required String content}) {
+  factory Note.create({required String title, required String content, required String userId}) {
     return Note(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: title,
       content: content,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
+      userId: userId,
+      sharedWith: [], // Explicitly provide an empty modifiable list
     );
   }
 
   // Factory constructor to convert from Map (for storage)
   factory Note.fromMap(Map<String, dynamic> map) {
+    List<String> sharedWithList = [];
+    
+    // Safely handle the sharedWith list
+    if (map['sharedWith'] != null) {
+      if (map['sharedWith'] is List) {
+        sharedWithList = List<String>.from(map['sharedWith']);
+      }
+    }
+    
     return Note(
-      id: map['id'],
-      title: map['title'],
-      content: map['content'],
-      createdAt: DateTime.parse(map['createdAt']),
-      updatedAt: DateTime.parse(map['updatedAt']),
-      sharedWith: List<String>.from(map['sharedWith'] ?? []),
+      id: map['id'] ?? '',
+      title: map['title'] ?? '',
+      content: map['content'] ?? '',
+      createdAt: DateTime.parse(map['createdAt'] ?? DateTime.now().toIso8601String()),
+      updatedAt: DateTime.parse(map['updatedAt'] ?? DateTime.now().toIso8601String()),
+      sharedWith: sharedWithList, // Use the safely created list
+      userId: map['userId'] ?? '',
     );
   }
 
@@ -46,7 +60,8 @@ class Note {
       'content': content,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
-      'sharedWith': sharedWith,
+      'sharedWith': List<String>.from(sharedWith), // Make a copy to ensure it's modifiable
+      'userId': userId,
     };
   }
 
@@ -57,10 +72,23 @@ class Note {
     updatedAt = DateTime.now();
   }
 
-  // Share note with another user
-  void shareWith(String userId) {
-    if (!sharedWith.contains(userId)) {
-      sharedWith.add(userId);
+  // Share note with another user - fixed to handle modifiable list
+  void shareWith(String userEmail) {
+    // Ensure sharedWith is initialized
+    if (sharedWith == null) {
+      sharedWith = [];
+    }
+    
+    // Only add if not already in the list
+    if (!sharedWith.contains(userEmail)) {
+      sharedWith.add(userEmail);
+    }
+  }
+  
+  // Remove shared user - added for completeness
+  void removeSharedUser(String userEmail) {
+    if (sharedWith.contains(userEmail)) {
+      sharedWith.remove(userEmail);
     }
   }
 }

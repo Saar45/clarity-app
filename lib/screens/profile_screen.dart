@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../widgets/brain_logo.dart';
+import '../services/user_service.dart';
+import '../services/note_service.dart';
 import 'login_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final Function(Brightness) changeTheme;
 
   const ProfileScreen({
@@ -11,8 +13,42 @@ class ProfileScreen extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  int _notesCount = 0;
+  int _sharedCount = 0;
+  int _collaboratorsCount = 0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStatistics();
+  }
+
+  Future<void> _loadStatistics() async {
+    setState(() {
+      _isLoading = true;
+    });
+    
+    final notesCount = await NoteService.getNotesCount();
+    final sharedCount = await NoteService.getSharedByMeCount();
+    final collaboratorsCount = await NoteService.getUniqueCollaboratorsCount();
+    
+    setState(() {
+      _notesCount = notesCount;
+      _sharedCount = sharedCount;
+      _collaboratorsCount = collaboratorsCount;
+      _isLoading = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
+    final currentUser = UserService.currentUser;
     
     return Scaffold(
       appBar: AppBar(
@@ -20,162 +56,165 @@ class ProfileScreen extends StatelessWidget {
         centerTitle: true,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              padding: EdgeInsets.only(top: 30, bottom: 30),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Theme.of(context).primaryColor,
-                    Theme.of(context).primaryColor.withOpacity(0.7),
-                  ],
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-              ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.white,
-                    child: Text(
-                      'CP',
-                      style: TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 15),
-                  Text(
-                    'Utilisateur',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Text(
-                    'utilisateur@example.com',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white.withOpacity(0.8),
-                    ),
-                  ),
-                  SizedBox(height: 15),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: EdgeInsets.only(top: 30, bottom: 30),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Compte Premium',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Theme.of(context).primaryColor,
+                          Theme.of(context).primaryColor.withOpacity(0.7),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(30),
+                        bottomRight: Radius.circular(30),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  _buildStatCard(context),
-                  SizedBox(height: 20),
-                  _buildSettingsSection(context, brightness),
-                  SizedBox(height: 20),
-                  _buildAboutSection(context),
-                  SizedBox(height: 30),
-                  OutlinedButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('Déconnexion'),
-                            content: Text('Êtes-vous sûr de vouloir vous déconnecter?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: Text('ANNULER'),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => LoginScreen(
-                                        changeTheme: changeTheme,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: Text('DÉCONNEXION'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: BorderSide(color: Colors.red),
-                      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    child: Column(
                       children: [
-                        Icon(Icons.exit_to_app),
-                        SizedBox(width: 8),
-                        Text('Déconnexion', style: TextStyle(fontSize: 16)),
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.white,
+                          child: Text(
+                            currentUser?.name.substring(0, 2).toUpperCase() ?? 'CP',
+                            style: TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 15),
+                        Text(
+                          currentUser?.name ?? 'Utilisateur',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          currentUser?.email ?? 'utilisateur@example.com',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                        ),
+                        SizedBox(height: 15),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Compte Premium',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 40),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      BrainLogo(size: 30, animate: false),
-                      SizedBox(width: 8),
-                      Text(
-                        'CLARITY POINT',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
+                  SizedBox(height: 20),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        _buildStatCard(context),
+                        SizedBox(height: 20),
+                        _buildSettingsSection(context, brightness),
+                        SizedBox(height: 20),
+                        _buildAboutSection(context),
+                        SizedBox(height: 30),
+                        OutlinedButton(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text('Déconnexion'),
+                                  content: Text('Êtes-vous sûr de vouloir vous déconnecter?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      child: Text('ANNULER'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        await UserService.logout();
+                                        Navigator.of(context).pop();
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => LoginScreen(
+                                              changeTheme: widget.changeTheme,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: Text('DÉCONNEXION'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red,
+                            side: BorderSide(color: Colors.red),
+                            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.exit_to_app),
+                              SizedBox(width: 8),
+                              Text('Déconnexion', style: TextStyle(fontSize: 16)),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    'Version 1.0.0',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
+                        SizedBox(height: 40),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            BrainLogo(size: 30, animate: false),
+                            SizedBox(width: 8),
+                            Text(
+                              'CLARITY POINT',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          'Version 1.0.0',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                        ),
+                        SizedBox(height: 30),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 30),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -190,11 +229,11 @@ class ProfileScreen extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildStatItem(context, '12', 'Notes'),
+            _buildStatItem(context, _notesCount.toString(), 'Notes'),
             Container(height: 40, width: 1, color: Colors.grey.withOpacity(0.3)),
-            _buildStatItem(context, '5', 'Partagées'),
+            _buildStatItem(context, _sharedCount.toString(), 'Partagées'),
             Container(height: 40, width: 1, color: Colors.grey.withOpacity(0.3)),
-            _buildStatItem(context, '3', 'Collaborateurs'),
+            _buildStatItem(context, _collaboratorsCount.toString(), 'Collaborateurs'),
           ],
         ),
       ),
@@ -276,7 +315,7 @@ class ProfileScreen extends StatelessWidget {
               trailing: Switch(
                 value: brightness == Brightness.dark,
                 onChanged: (value) {
-                  changeTheme(
+                  widget.changeTheme(
                     value ? Brightness.dark : Brightness.light,
                   );
                 },

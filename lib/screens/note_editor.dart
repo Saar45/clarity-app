@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/note.dart';
 import '../services/note_service.dart';
+import '../services/user_service.dart';
 import '../utils/strings.dart';
 
 class NoteEditorScreen extends StatefulWidget {
@@ -189,6 +190,15 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   Future<void> _saveNote() async {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
+    final currentUser = UserService.currentUser;
+    
+    if (currentUser == null) {
+      // Handle case where user is not logged in
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Veuillez vous connecter pour enregistrer des notes')),
+      );
+      return;
+    }
     
     if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -206,7 +216,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       return;
     }
     
-    if (_isEditing) {
+    if (_isEditing && _currentNote != null) {
       _currentNote!.updateContent(
         newTitle: title,
         newContent: content,
@@ -217,6 +227,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       final newNote = Note.create(
         title: title,
         content: content,
+        userId: currentUser.id,
       );
       await NoteService.addNote(newNote);
       Navigator.pop(context);
