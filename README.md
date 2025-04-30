@@ -4,6 +4,40 @@
 
 Une application de prise de notes intelligente pour organiser vos pensées.
 
+## Comment exécuter l'application localement sur un simulateur Android
+
+### Prérequis
+1. **Flutter SDK** : Assurez-vous d'avoir Flutter SDK installé (version 3.0.0 ou supérieure)
+2. **Android Studio** : Avec le plugin Flutter et les outils Android SDK
+3. **Simulateur Android** : Configuré via AVD Manager dans Android Studio
+
+### Étapes pour exécuter l'application
+1. **Cloner le dépôt** :
+   ```bash
+   git clone <url-du-repo>
+   cd /Users/naby/Developer/clarity-app/clarity
+   ```
+
+2. **Installer les dépendances** :
+   ```bash
+   flutter pub get
+   ```
+
+3. **Lancer le simulateur Android** :
+   - Ouvrez Android Studio
+   - Sélectionnez "AVD Manager" dans le menu "Tools"
+   - Démarrez un émulateur existant ou créez-en un nouveau
+
+4. **Vérifier les appareils disponibles** :
+   ```bash
+   flutter devices
+   ```
+
+5. **Exécuter l'application** :
+   ```bash
+   flutter run
+   ```
+
 ## Workflow d'interaction entre les utilisateurs
 
 ### 1. Inscription et Connexion
@@ -87,7 +121,5 @@ Une application de prise de notes intelligente pour organiser vos pensées.
 2. Il clique sur le bouton de déconnexion
 3. Une confirmation est demandée
 4. Après confirmation, l'utilisateur est redirigé vers l'écran de connexion
-
-## Diagramme d'interaction
 
 
